@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rock Hard</title>
+<meta name="description" content="Rock Hard: a songwriting app. Type a few lyrics or describe a song and get the whole thing — plus a backing track to perform over. Metal, heavy metal, rock, rap, and hip-hop. Runs entirely on your device. No accounts, no ads.">
+<meta name="theme-color" content="#0B0B0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rock Hard">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="180x180" href="icons/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="logo-row">
+    <img class="logo-img" src="logo-header.jpg" alt="Rock Hard logo">
+    <div>
+      <h1 class="app-name">Rock Hard</h1>
+      <p class="app-tag">Type a few lines. Get a whole song. 🤘</p>
+    </div>
+  </div>
+  <p class="fine">Rule-based lyrics, written on your phone. It does not sing — it writes the song and plays the backing track so you can perform it.</p>
+</header>
+
+<main id="main">
+  <!-- ============ CREATE ============ -->
+  <section id="tab-create" class="tab-panel" role="tabpanel" aria-label="Create a song">
+    <h2 class="step-head">Step 1 — How do you want to start?</h2>
+    <div class="method-row" role="group" aria-label="Starting method">
+      <button type="button" class="method-card is-active" id="method-lyrics-btn">
+        <span class="method-title">My Lyrics</span>
+        <span class="method-desc">Type a few of your own lines. The song is built around them, word for word.</span>
+      </button>
+      <button type="button" class="method-card" id="method-describe-btn">
+        <span class="method-title">Describe My Song</span>
+        <span class="method-desc">No lyrics yet? Just describe the subject, story, or feeling in plain sentences.</span>
+      </button>
+    </div>
+
+    <label class="voice-row">
+      <input type="checkbox" id="voice-toggle">
+      <span><strong>Write it in my voice</strong> <span class="fine" id="voice-hint">Build a voice profile first (My Voice tab).</span></span>
+    </label>
+
+    <div id="input-lyrics-wrap">
+      <label class="field-label" for="input-lyrics">Your lyrics (a few lines is plenty)</label>
+      <textarea id="input-lyrics" rows="4" maxlength="2000" placeholder="Type a few lines of your own… e.g.&#10;Midnight found me standing in the rain&#10;Thunder in my chest and steel in my soul"></textarea>
+    </div>
+    <div id="input-describe-wrap" hidden>
+      <label class="field-label" for="input-describe">Describe the song</label>
+      <textarea id="input-describe" rows="4" maxlength="2000" placeholder="A few sentences about what the song is about… e.g. A song about coming home after years away, and finding out nothing changed except me."></textarea>
+    </div>
+
+    <h2 class="step-head">Step 2 — Genre</h2>
+    <div class="chips" id="genre-chips" role="group" aria-label="Genre"></div>
+    <p class="mode-blurb" id="genre-blurb"></p>
+
+    <h2 class="step-head">Step 3 — Style</h2>
+    <div class="chips" id="style-chips" role="group" aria-label="Style"></div>
+    <p class="fine" id="style-hint"></p>
+
+    <h2 class="step-head">Step 4 — Song length</h2>
+    <div class="segmented" role="group" aria-label="Song length">
+      <button type="button" class="seg-btn" id="length-short">Short — verse + chorus</button>
+      <button type="button" class="seg-btn is-active" id="length-full">Full — the whole song</button>
+    </div>
+    <label class="voice-row">
+      <input type="checkbox" id="bridge-toggle">
+      <span><strong>Include a bridge</strong> <span class="fine">A turning point before the outro. Full songs only.</span></span>
+    </label>
+
+    <button class="build-btn" id="build-btn" type="button">🤘 Build My Song</button>
+    <button class="random-btn" id="random-idea-btn" type="button">🎲 Random idea</button>
+    <div class="idea-box" id="idea-box" hidden></div>
+
+    <div id="results-section" hidden>
+      <div class="results-head">
+        <h2>Your song</h2>
+        <p class="fine" id="save-note"></p>
+      </div>
+
+      <div class="field-label">Title — tap one to use it</div>
+      <div class="chips" id="title-chips"></div>
+
+      <div id="warnings-box" class="warnings-box"></div>
+
+      <div class="player-box player-bar">
+        <div class="player-head">
+          <strong>Backing track</strong>
+          <span class="fine">Plays while the lyrics scroll — sing or rap over it.</span>
+        </div>
+        <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+        <button class="play-btn" id="play-btn" type="button">▶ Play backing track</button>
+        <div class="slider-block">
+          <div class="slider-head">
+            <label class="field-label" for="bpm-slider">Tempo</label>
+            <span class="slider-value" id="bpm-value">132 BPM</span>
+          </div>
+          <input type="range" id="bpm-slider" min="60" max="200" step="1" value="132" aria-label="Tempo in beats per minute">
+          <div class="slider-ends"><span>60 · slow</span><span>200 · fast</span></div>
+        </div>
+        <div class="inst-row" role="group" aria-label="Instruments">
+          <label><input type="checkbox" id="inst-drums" checked> Drums</label>
+          <label><input type="checkbox" id="inst-bass" checked> Bass</label>
+          <label><input type="checkbox" id="inst-riff" checked> Riffs</label>
+        </div>
+        <div class="slider-block">
+          <div class="slider-head">
+            <label class="field-label" for="volume-slider">Volume</label>
+          </div>
+          <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.8" aria-label="Volume">
+        </div>
+      </div>
+
+      <div id="sections-list"></div>
+
+      <div class="results-actions">
+        <button class="mini-btn" id="copy-btn" type="button">Copy lyrics</button>
+        <button class="mini-btn" id="export-btn" type="button">Export as TXT</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SONGBOOK ============ -->
+  <section id="tab-songbook" class="tab-panel" role="tabpanel" aria-label="Songbook" hidden>
+    <h2 class="step-head">Your songbook</h2>
+    <p class="fine">Every song you build saves here automatically. Tap a song to open it, play it, edit it, or export it. Tap a song title to rename it.</p>
+    <div class="sb-toolbar">
+      <input type="search" id="sb-search" placeholder="Search by title, theme, or lyric…" aria-label="Search songs">
+      <select id="sb-genre-filter" aria-label="Filter by genre">
+        <option value="all">All genres</option>
+        <option value="metal">Metal</option>
+        <option value="heavy-metal">Heavy Metal</option>
+        <option value="rock">Rock</option>
+        <option value="rap">Rap</option>
+        <option value="hip-hop">Hip-Hop</option>
+      </select>
+    </div>
+    <div class="sb-backup-row">
+      <button class="mini-btn" id="backup-export-btn" type="button">Export backup</button>
+      <button class="mini-btn" id="backup-import-btn" type="button">Import backup</button>
+      <input type="file" id="backup-import-file" accept="application/json,.json" hidden>
+      <button class="mini-btn" id="undo-btn" type="button" hidden>Undo</button>
+    </div>
+    <div id="sb-list-wrap">
+      <div id="sb-list"></div>
+    </div>
+    <div id="sb-detail" hidden></div>
+  </section>
+
+  <!-- ============ MY VOICE ============ -->
+  <section id="tab-voice" class="tab-panel" role="tabpanel" aria-label="My Voice" hidden>
+    <h2 class="step-head">My Voice</h2>
+    <p>Rock Hard can write in <strong>your</strong> style. Paste in some of your own lyrics — at least 3 lines — and it builds a voice profile from your words: your favorite vocabulary, your phrasing, your rhyme endings, how long your lines run. The profile stays on this phone, and it works together with My Lyrics or Describe My Song, never instead of them.</p>
+    <p class="fine">This is written style, not cloned audio. Nothing here records or copies your actual singing voice.</p>
+    <label class="field-label" for="voice-sample">Your lyrics</label>
+    <textarea id="voice-sample" rows="8" maxlength="8000" placeholder="Paste some of your own lyrics here…"></textarea>
+    <button class="build-btn" id="voice-build-btn" type="button">Build my voice profile</button>
+    <div class="voice-summary" id="voice-summary">No voice profile yet. Paste some of your own lyrics and build one.</div>
+    <button class="text-btn" id="voice-clear-btn" type="button">Clear my voice profile</button>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section id="tab-about" class="tab-panel" role="tabpanel" aria-label="About" hidden>
+    <h2 class="step-head">About Rock Hard</h2>
+    <p><strong>What it is:</strong> a songwriting app for Robert. Type a few lyrics, or describe a song in plain words, and it writes the whole song — verse, chorus, bridge, outro — then plays a backing track in the genre so you can sing or rap over it.</p>
+    <p><strong>Honest disclosure:</strong> the lyrics are written by a rule-based engine running on your phone. It is not a real AI model and it does not sing. There is no AI vocalist in this app — real AI singing needs a paid service, and this app is $0 forever.</p>
+    <p><strong>How the songs are built:</strong> the engine keeps your lines word for word, picks a theme from your description, then writes each section with a job to do — verse 1 introduces the situation, verse 2 develops the story, the chorus says the central message, the bridge turns the story, and the outro resolves it. It checks its own work for repeated lines, broken rhymes, lines that are hard to perform, and lines that do not read as proper sentences.</p>
+    <p><strong>Your data:</strong> everything lives on this phone in local storage. No accounts, no servers, no tracking, no ads. Export a backup from the Songbook tab so a lost phone never means lost songs.</p>
+    <p><strong>Put it on your home screen:</strong> on Android, open this page in Chrome, tap the three dots, then Add to Home Screen. It opens full-screen like a real app. On iPhone, open it in Safari, tap Share, then Add to Home Screen.</p>
+    <p class="fine">Rock Hard v1.0.0 · Metal · Heavy Metal · Rock · Rap · Hip-Hop · Made for Robert Kirk 🤘</p>
+    <button class="text-btn danger" id="clear-data-btn" type="button">Clear all Rock Hard data from this phone</button>
+  </section>
+</main>
+
+<nav class="tab-bar" aria-label="Main tabs">
+  <button type="button" class="tab-btn is-active" data-tab="tab-create">🤘 Create</button>
+  <button type="button" class="tab-btn" data-tab="tab-songbook">📖 Songbook</button>
+  <button type="button" class="tab-btn" data-tab="tab-voice">🎤 My Voice</button>
+  <button type="button" class="tab-btn" data-tab="tab-about">ℹ️ About</button>
+</nav>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
