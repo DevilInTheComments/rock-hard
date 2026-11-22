@@ -26,7 +26,7 @@ check('every genre has vocab, titles, statements, hooks',
   A.GENRES.every(function (g) { return g.vocab.length >= 8 && g.titlePatterns.length >= 4 && g.statements.length >= 6 && g.hookTemplates.length >= 4; }));
 check('every style has allowed genres and hook templates',
   A.STYLES.every(function (s) { return s.genres.length >= 2 && s.hookTemplates.length >= 2; }));
-check('rhyme families: 32 families, each 2+ words, no word reused across families', (function () {
+check('rhyme families: 38 families, each 2+ words, no word reused across families', (function () {
   var seen = {};
   for (var i = 0; i < A.RHYME_FAMILIES.length; i++) {
     var f = A.RHYME_FAMILIES[i];
@@ -36,7 +36,7 @@ check('rhyme families: 32 families, each 2+ words, no word reused across familie
       seen[f.words[j]] = true;
     }
   }
-  return A.RHYME_FAMILIES.length === 32;
+  return A.RHYME_FAMILIES.length === 38;
 })());
 check('every rhyme family has a tag used by at least one style or genre', (function () {
   return A.RHYME_FAMILIES.every(function (f) { return f.tags.length >= 1; });
@@ -583,6 +583,188 @@ check('describe mode: theme word reaches the song (hook or title carries it)', (
   var text = (s.title + ' ' + A.songToText(s)).toLowerCase();
   return text.indexOf('betrayal') !== -1 && s.theme === 'betrayal' && s.warnings.length === 0;
 })());
+
+/* ---------- description reading (improvement pass 2026-11-22) ---------- */
+var DESC_A = "I miss my daughter. I wish we could talk again, rebuild our relationship, and make up for the time we've lost. I want the song to express love, regret, and hope.";
+var DESC_B = "I lost someone I loved, and the emptiness has followed me everywhere. I want a dark, emotional song about grief and learning to survive.";
+check('describeProfile A: reunion story, subject my daughter, love/regret/hope', (function () {
+  var p = A.describeProfile(DESC_A, 'rock');
+  return p.story === 'reunion' && p.subject === 'my daughter' &&
+    p.emotions.indexOf('love') !== -1 && p.emotions.indexOf('regret') !== -1 &&
+    p.emotions.indexOf('hope') !== -1 && p.emotions.indexOf('missing') !== -1 &&
+    p.intents.indexOf('rebuild') !== -1;
+})());
+check('describeProfile B: grief story, subject someone I loved, grief/emptiness/survive', (function () {
+  var p = A.describeProfile(DESC_B, 'metal');
+  return p.story === 'grief' && p.subject === 'someone I loved' &&
+    p.emotions.indexOf('grief') !== -1 && p.emotions.indexOf('emptiness') !== -1 &&
+    p.intents.indexOf('survive') !== -1;
+})());
+check('describeProfile: no story for a plain description (back-compat)', (function () {
+  var p = A.describeProfile('a song about fire', 'metal');
+  return p.story === null && p.theme === 'fire';
+})());
+check('describeProfile: betrayal / perseverance / family stories detected', (function () {
+  var b = A.describeProfile('Aggressive heavy metal song about surviving betrayal and getting revenge', 'heavy-metal');
+  var p = A.describeProfile('Aggressive rap song about refusing to give up', 'rap');
+  var f = A.describeProfile('Emotional hip-hop song about family and perseverance', 'hip-hop');
+  return b.story === 'betrayal' && p.story === 'perseverance' && f.story === 'family';
+})());
+check('story packs: every rendered line passes the grammar gate and is performable', (function () {
+  var bad = [];
+  var profile = { subject: 'my daughter', emotions: ['love', 'hope'] };
+  Object.keys(A.STORY_PACKS).forEach(function (key) {
+    var pack = A.STORY_PACKS[key];
+    ['situation', 'develop', 'stakes', 'hooks', 'turn', 'resolve'].forEach(function (slot) {
+      (pack[slot] || []).forEach(function (t) {
+        var line = A.renderStoryLine(t, profile, 'fire');
+        if (!A.validateLine(line).ok) bad.push(key + '/' + slot + ': "' + line + '" (' + A.validateLine(line).reason + ')');
+        else if (A.countSyllables(line) > 14) bad.push(key + '/' + slot + ': "' + line + '" too long');
+      });
+    });
+  });
+  if (bad.length) console.log('  story pack failures: ' + bad.slice(0, 5).join(' | '));
+  return bad.length === 0;
+})());
+check('demo songs A and B: different stories, different lyrics, zero warnings', (function () {
+  var a = A.generateSong({ seed: 101, genre: 'rock', styles: ['slow-romantic'], method: 'describe', description: DESC_A, length: 'full', bridge: true });
+  var b = A.generateSong({ seed: 202, genre: 'metal', styles: ['dark'], method: 'describe', description: DESC_B, length: 'full', bridge: true });
+  var textA = A.songToText(a).toLowerCase(), textB = A.songToText(b).toLowerCase();
+  if (a.story !== 'reunion' || b.story !== 'grief') return false;
+  if (a.warnings.length || b.warnings.length) return false;
+  if (textA.indexOf('daughter') === -1 || textB.indexOf('daughter') !== -1) return false;
+  if (textB.indexOf('emptiness') === -1 || textA.indexOf('emptiness') !== -1) return false;
+  var setA = {}, setB = {};
+  A.flattenLines(a).forEach(function (l) { setA[l.toLowerCase()] = true; });
+  A.flattenLines(b).forEach(function (l) { setB[l.toLowerCase()] = true; });
+  var shared = Object.keys(setA).filter(function (k) { return setB[k]; }).length;
+  var union = {};
+  Object.keys(setA).concat(Object.keys(setB)).forEach(function (k) { union[k] = true; });
+  return shared / Object.keys(union).length < 0.35;
+})());
+check('validateLine: accepts direct questions', (function () {
+  return ['Do you hear the sound', 'Can you feel the fire', 'Will you come back home', 'Do I miss you still'].every(function (l) { return A.validateLine(l).ok; });
+})());
+
+/* ---------- rap flow ---------- */
+check('buildRapCouplet: lines pass the grammar gate and rhyme internally', (function () {
+  var bad = [];
+  for (var seed = 1; seed <= 20; seed++) {
+    var c = A.buildRapCouplet(A.makeRng(seed), { theme: 'grind', genre: 'rap', styles: ['aggressive'] }, []);
+    if (!c.lines || c.lines.length !== 2) return false;
+    c.lines.forEach(function (l) {
+      if (!A.validateLine(l).ok) bad.push('"' + l + '" (' + A.validateLine(l).reason + ')');
+      if (A.countSyllables(l) > 14) bad.push('"' + l + '" too long');
+      /* Internal rhyme: the word before the comma and the last word
+         must come from the same rhyme family. */
+      var parts = l.split(',');
+      if (parts.length < 2) { bad.push('"' + l + '" has no internal rhyme'); return; }
+      var mid = A.lastWord(parts[0]), end = A.lastWord(l);
+      var fm = A.familyOfWord(mid), fe = A.familyOfWord(end);
+      if (!fm || !fe || fm.id !== fe.id) bad.push('"' + l + '" internal rhyme missing');
+    });
+  }
+  if (bad.length) console.log('  rap failures: ' + bad.slice(0, 3).join(' | '));
+  return bad.length === 0;
+})());
+check('punchlines: every rap/hip-hop punchline passes the grammar gate', (function () {
+  var bad = [];
+  Object.keys(A.PUNCHLINES).forEach(function (g) {
+    A.PUNCHLINES[g].forEach(function (p) {
+      if (!A.validateLine(p).ok) bad.push(g + ': "' + p + '"');
+      if (A.countSyllables(p) > 14) bad.push(g + ': "' + p + '" too long');
+    });
+  });
+  if (bad.length) console.log('  punchline failures: ' + bad.join(' | '));
+  return bad.length === 0;
+})());
+check('rap songs actually use rap couplets or punchlines', (function () {
+  var rapVerb = /^(I (spit|flip|drop|bring|chase|claim|own|ride|speak|live|break|feel|carry|write) the \w+, I |They (talk|count) )/;
+  var hits = 0;
+  for (var seed = 1; seed <= 10; seed++) {
+    var s = A.generateSong({ seed: seed, genre: 'rap', styles: ['aggressive'], method: 'describe', description: 'a song about the grind', length: 'full', bridge: true });
+    var flat = A.flattenLines(s);
+    if (flat.some(function (l) { return rapVerb.test(l); })) hits++;
+    if (flat.some(function (l) { return A.PUNCHLINES.rap.indexOf(l) !== -1; })) hits++;
+  }
+  return hits >= 1;
+})());
+
+/* ---------- My Voice learns phrasing, not just words ---------- */
+check('buildVoiceProfile: captures line openers, trigrams, and shapes', (function () {
+  var p = A.buildVoiceProfile('I keep driving through the rain\nI keep running from the night\nI never stop when the road gets dark\nWe ride together through the storm\nDo you hear the thunder calling?');
+  return p.topOpeners.indexOf('I keep') !== -1 &&
+    p.topOpeners.indexOf('I never') !== -1 &&
+    p.topTrigrams.length > 0 &&
+    p.shapes.questions === 1 &&
+    p.shapes.firstPerson >= 3;
+})());
+check('voiceSummary: names the line openers', (function () {
+  var p = A.buildVoiceProfile('I keep driving through the rain\nI keep running from the night\nI never stop when the road gets dark');
+  return A.voiceSummary(p).indexOf('I keep') !== -1;
+})());
+check('My Voice: generated songs use Robert\'s line openers', (function () {
+  var v = A.buildVoiceProfile('I keep driving through the rain\nI keep running from the night\nI never stop when the road gets dark\nI keep chasing the morning light');
+  var hits = 0;
+  for (var seed = 1; seed <= 10; seed++) {
+    var s = A.generateSong({ seed: seed, genre: 'rock', styles: ['heavy'], method: 'describe', description: 'a song about the night', length: 'full', bridge: true, voice: v });
+    if (A.flattenLines(s).some(function (l) { return /^(I keep|I never)\b/.test(l); })) hits++;
+  }
+  return hits >= 1;
+})());
+
+/* ---------- My Lyrics: seed lines survive everywhere ---------- */
+check('My Lyrics: seed lines preserved verbatim in every genre, short and full', (function () {
+  var seeds = ['Midnight found me standing in the rain', 'Thunder in my chest and steel in my soul'];
+  for (var gi = 0; gi < A.GENRES.length; gi++) {
+    var g = A.GENRES[gi];
+    ['short', 'full'].forEach(function (len) {
+      var s = A.generateSong({ seed: 5, genre: g.id, styles: A.stylesForGenre(g.id).slice(0, 1).map(function (x) { return x.id; }), method: 'lyrics', seedLines: seeds, length: len, bridge: len === 'full', voice: null });
+      var flat = A.flattenLines(s);
+      if (flat.indexOf(seeds[0]) === -1 || flat.indexOf(seeds[1]) === -1) return false;
+    });
+  }
+  return true;
+})());
+
+/* ---------- regeneration keeps the story ---------- */
+check('regenerateSection: a regenerated verse still tells the same story', (function () {
+  var s = A.generateSong({ seed: 101, genre: 'rock', styles: ['slow-romantic'], method: 'describe', description: DESC_A, length: 'full', bridge: true });
+  var sec = s.sections.filter(function (x) { return x.role === 'verse2'; })[0];
+  var out = A.regenerateSection(s, sec.id, 'emotional', 42);
+  var profile = s.describeProfile;
+  var storyLines = [];
+  ['situation', 'develop', 'stakes', 'hooks', 'turn', 'resolve'].forEach(function (slot) {
+    (A.STORY_PACKS.reunion[slot] || []).forEach(function (t) {
+      storyLines.push(A.renderStoryLine(t, profile, s.theme));
+    });
+  });
+  return out && out.lines.some(function (l) { return storyLines.indexOf(l) !== -1; });
+})());
+
+/* ---------- offline: service worker ---------- */
+check('sw.js exists and names the rock-hard-v1 cache', (function () {
+  return fs.existsSync(path.join(root, 'sw.js')) &&
+    fs.readFileSync(path.join(root, 'sw.js'), 'utf8').indexOf('rock-hard-v1') !== -1;
+})());
+check('sw.js caches the app shell cache-first (install + fetch handlers)', (function () {
+  var sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  return sw.indexOf('addAll') !== -1 && sw.indexOf('caches.match') !== -1 &&
+    sw.indexOf("addEventListener('install'") !== -1 &&
+    sw.indexOf("addEventListener('fetch'") !== -1;
+})());
+check('sw.js shell list: every listed file exists on disk', (function () {
+  var sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  var m = sw.match(/var SHELL_FILES = \[([\s\S]*?)\];/);
+  if (!m) return false;
+  var files = (m[1].match(/'([^']+)'/g) || []).map(function (q) { return q.slice(1, -1); })
+    .filter(function (f) { return f !== './'; });
+  var need = ['index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'logo-header.jpg'];
+  if (!need.every(function (f) { return files.indexOf(f) !== -1; })) return false;
+  return files.every(function (f) { return fs.existsSync(path.join(root, f)); });
+})());
+check('app.js registers the service worker', js.indexOf("serviceWorker") !== -1 && js.indexOf("register('sw.js')") !== -1);
+check('index.html mentions offline', html.indexOf('Offline') !== -1);
 
 console.log('\nRock Hard tests: ' + passed + ' passed, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);

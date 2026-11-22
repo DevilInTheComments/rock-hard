@@ -63,11 +63,11 @@ var RHYME_FAMILIES = [
   { id: 'blood',   tags: ['dark', 'heavy'],       words: ['blood', 'flood', 'mud'],          leads: ['We stand in the', "I'm washed in the", 'I crawl through the', 'We drown in the'] },
   { id: 'fall',    tags: ['sad', 'bright'],       words: ['fall', 'call', 'wall'],           leads: ["I'm waiting for the", 'We face the', "Don't fear the", 'We rise above the'] },
   { id: 'tears',   tags: ['sad', 'romantic'],     words: ['tears', 'years', 'fears'],        leads: ['I cry through the', "I'm buried in the", "I'm haunted by the", 'We live with the'] },
-  { id: 'cold',    tags: ['sad', 'dark'],         words: ['cold', 'hold', 'gold'],           leads: ["I'm left out in the", "We're trapped in the", 'I reach for the', "I'm frozen in the"] },
+  { id: 'cold',    tags: ['sad', 'dark'],         words: ['cold', 'hold', 'gold'],           leads: ['I reach for the', 'We reach for the', 'I found the', 'We found the'] },
   { id: 'broken',  tags: ['sad', 'romantic'],     words: ['broken', 'spoken', 'unspoken'],   leads: ['The words were', 'The truth was', 'What was', 'I know what was'] },
   { id: 'home',    tags: ['heavy', 'sad'],        words: ['home', 'alone', 'gone'],          leads: ["I'm far from", "I'm not", "We're not", "I won't be"] },
   { id: 'dark',    tags: ['dark', 'romantic'],    words: ['dark', 'heart', 'spark'],         leads: ["I'm lost in the", "We're deep in the", "I'm fading in the"] },
-  { id: 'sky',     tags: ['bright', 'romantic'],  words: ['sky', 'high'],                    leads: ['I touch the', "We're under the", "I'm above the", 'We chase the'] },
+  { id: 'sky',     tags: ['bright', 'romantic'],  words: ['sky', 'high'],                    leads: ['I touch the', "We're under the", "I'm chasing the", 'We chase the'] },
   { id: 'flame',   tags: ['romantic', 'heavy'],   words: ['flame', 'shame', 'blame'],        leads: ['I carry the', 'I take the', 'We live with the', 'I own the'] },
   { id: 'breath',  tags: ['dark', 'sad'],         words: ['breath', 'death', 'rest'],        leads: ['We fight for', 'I need', 'Give me', "I'm still fighting for"] },
   { id: 'grace',   tags: ['romantic', 'bright'],  words: ['grace', 'place', 'face'],         leads: ["I'm searching for the", "We're looking for the", 'I keep my', 'We found the'] },
@@ -88,7 +88,13 @@ var RHYME_FAMILIES = [
   { id: 'love',    tags: ['romantic', 'sad'],     words: ['above', 'love'],                  leads: ["I'm falling from", "I'm rising from", 'We fall from', "I'm torn from"] },
   { id: 'burn',    tags: ['heavy', 'dark'],       words: ['burn', 'turn'],                   leads: ['I watch it', 'We let it', 'I feel it', "Don't let it"] },
   { id: 'game',    tags: ['street', 'bright'],    words: ['game', 'fame'],                   leads: ["I'm chasing the", "We're hungry for the", "I'm playing for the", 'I want the'] },
-  { id: 'end',     tags: ['sad', 'dark'],         words: ['end', 'bend'],                    leads: ['I see the', 'We reach the', "We're running to the", "I won't"] }
+  { id: 'end',     tags: ['sad', 'dark'],         words: ['end', 'bend'],                    leads: ['I see the', 'We reach the', "We're running to the", "I won't"] },
+  { id: 'away',    tags: ['romantic', 'bright'], words: ['away', 'today'],                 leads: ['I am walking', 'We are drifting', 'I keep running', 'We keep moving'] },
+  { id: 'door',    tags: ['sad', 'romantic'],    words: ['door', 'floor'],                 leads: ['I am staring at the', 'We are waiting by the', 'I keep knocking on the', 'We are staring at the'] },
+  { id: 'hand',    tags: ['bright', 'sad'],      words: ['hand', 'stand'],                 leads: ['I reach for your', 'Take my', 'I am reaching for your', 'You can take my'] },
+  { id: 'time',    tags: ['romantic', 'sad'],    words: ['time', 'rhyme'],                 leads: ['I am running out of', 'I need more', 'We are chasing', 'Give me more'] },
+  { id: 'deep',    tags: ['dark', 'sad'],        words: ['deep', 'sleep'],                 leads: ['I fall into the', 'We sink into the', "I'm lost in the", 'I drift into the'] },
+  { id: 'street',  tags: ['street', 'bright'],   words: ['street', 'beat'],                leads: ['I walk down the', 'We own the', 'I hear the', 'We rule the'] }
 ];
 
 /* Discourse markers only — they sit in front of a complete clause and never
@@ -126,7 +132,10 @@ var GENRES = [
       'Through the {T}, we never fall',
       'Burn it down, raise the {T}',
       'We are the {T} — hear us scream',
-      'Nothing left but the {T}'
+      'Nothing left but the {T}',
+      'Sing it back — {T}!',
+      'One voice, one {T}, one last stand',
+      'You say {T}, we say louder'
     ]
   },
   {
@@ -150,7 +159,9 @@ var GENRES = [
       'Steel in our hearts, {T} in our souls',
       'We are the {T} — we ride tonight',
       'Thunder and {T}, forever loud',
-      'Raise your fist for the {T}'
+      'Raise your fist for the {T}',
+      'Raise your fist and shout the {T}',
+      'We ride for the {T} tonight'
     ]
   },
   {
@@ -174,7 +185,9 @@ var GENRES = [
       'We were born for the {T} tonight',
       'Sing it loud, the {T} is ours',
       'Highway hearts and {T} dreams',
-      'This is the {T} we have been waiting for'
+      'This is the {T} we have been waiting for',
+      'Sing it back — the {T} is ours',
+      'One more time for the {T}'
     ]
   },
   {
@@ -337,6 +350,382 @@ function extractTheme(description, genreId) {
 }
 
 /* =====================================================================
+ * DESCRIPTION READING — the description is read as a whole, not as one
+ * keyword. describeProfile returns every slot the engine can find:
+ *   theme      — the single word used for titles and hook templates
+ *   subject    — who or what the song is about ("my daughter",
+ *                "someone I loved", or null when no one is named)
+ *   people     — every person/relationship named
+ *   emotions   — every feeling named, in the order they appear
+ *   intents    — what the singer wants the song to do ("rebuild",
+ *                "survive", "never-give-up", ...)
+ *   story      — the story arc the description points at, or null
+ *   tags       — rhyme-family tags the emotions and story pull in
+ *   message    — the first intent, the song's central message
+ * A story pack then writes lines about THAT subject, THOSE emotions,
+ * and THAT message in every section — verse 1 sets the situation,
+ * verse 2 develops it, the chorus carries the message, the bridge
+ * turns it, the outro resolves it. Two descriptions that only share
+ * a feeling still get different songs, because the story packs differ.
+ * ===================================================================== */
+var DESCRIBE_EMOTIONS = [
+  { id: 'love',       keys: ['love', 'loved', 'loving', 'adore'] },
+  { id: 'regret',     keys: ['regret', 'regrets', 'sorry', 'wish i had', 'if only', 'mistake', 'my fault'] },
+  { id: 'hope',       keys: ['hope', 'hopeful', 'hopefully', 'better days', 'one day'] },
+  { id: 'grief',      keys: ['grief', 'grieving', 'passed away', 'died', 'death of', 'funeral', 'bury'] },
+  { id: 'emptiness',  keys: ['emptiness', 'empty', 'hollow', 'void', 'nothing left'] },
+  { id: 'missing',    keys: ['miss', 'missing', 'missed'] },
+  { id: 'pain',       keys: ['pain', 'hurt', 'hurting', 'ache', 'aching', 'suffering'] },
+  { id: 'anger',      keys: ['angry', 'anger', 'furious', 'betrayed', 'betrayal', 'revenge', 'lied to'] },
+  { id: 'fear',       keys: ['afraid', 'fear', 'scared', 'terrified'] },
+  { id: 'survive',    keys: ['survive', 'surviving', 'survival', 'keep going', 'carry on', 'hold on', 'learning to survive', 'learn to survive'] },
+  { id: 'loss',       keys: ['lost', 'loss', 'losing', 'gone'] },
+  { id: 'pride',      keys: ['proud', 'pride'] },
+  { id: 'lonely',     keys: ['lonely', 'alone', 'loneliness'] },
+  { id: 'forgive',    keys: ['forgive', 'forgiveness', 'forgiven'] }
+];
+var DESCRIBE_PEOPLE = [
+  { id: 'daughter', keys: ['daughter', 'my girl', 'baby girl'], label: 'my daughter' },
+  { id: 'son',      keys: ['son', 'my boy'], label: 'my son' },
+  { id: 'kids',     keys: ['kids', 'children', 'my kids'], label: 'my kids' },
+  { id: 'mama',     keys: ['mom', 'mother', 'mama'], label: 'my mom' },
+  { id: 'papa',     keys: ['dad', 'father', 'papa'], label: 'my dad' },
+  { id: 'brother',  keys: ['brother'], label: 'my brother' },
+  { id: 'sister',   keys: ['sister'], label: 'my sister' },
+  { id: 'friend',   keys: ['friend', 'best friend'], label: 'my friend' },
+  { id: 'loved-one', keys: ['someone i loved', 'someone i love', 'the one i loved', 'the one i love'], label: 'someone I loved' }
+];
+var DESCRIBE_INTENTS = [
+  { id: 'rebuild',       keys: ['rebuild', 'talk again', 'make up for', 'time we lost', 'time we have lost', 'start over', 'fix things'] },
+  { id: 'survive',       keys: ['learning to survive', 'learn to survive', 'keep going', 'carry on', 'survive'] },
+  { id: 'never-give-up', keys: ['never give up', 'refuse to give up', 'refusing to give up', 'wont give up', "won't give up", 'not giving up'] },
+  { id: 'goodbye',       keys: ['say goodbye', 'goodbye', 'let go', 'letting go'] },
+  { id: 'homecoming',    keys: ['come home', 'coming home'] },
+  { id: 'stand-up',      keys: ['stand up', 'fight back', 'get revenge', 'revenge'] }
+];
+/* Family tags each emotion pulls toward (romantic/sad/dark/bright/heavy). */
+var EMOTION_TAGS = {
+  love: ['romantic', 'bright'], regret: ['sad', 'romantic'], hope: ['bright', 'romantic'],
+  grief: ['sad', 'dark'], emptiness: ['dark', 'sad'], missing: ['sad', 'romantic'],
+  pain: ['sad', 'heavy'], anger: ['heavy', 'dark'], fear: ['dark', 'sad'],
+  survive: ['heavy', 'bright'], loss: ['sad', 'dark'], pride: ['bright', 'heavy'],
+  lonely: ['sad', 'dark'], forgive: ['romantic', 'sad']
+};
+var DESCRIBE_STORIES = [
+  { id: 'reunion',      people: ['daughter', 'son', 'kids', 'mama', 'papa', 'brother', 'sister', 'friend'], intents: ['rebuild'], emotions: ['missing', 'love', 'regret'] },
+  { id: 'grief',        people: ['loved-one', 'mama', 'papa', 'brother', 'sister', 'friend'], intents: ['survive'], emotions: ['grief', 'emptiness', 'loss'] },
+  { id: 'betrayal',     intents: ['stand-up'], emotions: ['anger'], theme: 'betrayal' },
+  { id: 'perseverance', intents: ['never-give-up', 'survive'], emotions: ['survive'], theme: 'fight' },
+  { id: 'love',         emotions: ['love', 'missing'] },
+  { id: 'family',       theme: 'family', emotions: [] }
+];
+function describeProfile(description, genreId) {
+  var text = (description || '').toLowerCase();
+  function has(keys) {
+    for (var i = 0; i < keys.length; i++) {
+      /* Whole words only — "son" must never match "someone". */
+      var re = new RegExp('\\b' + keys[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+      if (re.test(text)) return true;
+    }
+    return false;
+  }
+  var emotions = [];
+  DESCRIBE_EMOTIONS.forEach(function (e) { if (has(e.keys)) emotions.push(e.id); });
+  var people = [];
+  var subject = null, subjectId = null;
+  DESCRIBE_PEOPLE.forEach(function (p) {
+    if (has(p.keys)) {
+      people.push(p.id);
+      if (!subject) { subject = p.label; subjectId = p.id; }
+    }
+  });
+  var intents = [];
+  DESCRIBE_INTENTS.forEach(function (it) { if (has(it.keys)) intents.push(it.id); });
+  var theme = extractTheme(description, genreId);
+  /* Score each story by its signals; the strongest match wins. */
+  var best = null, bestScore = 0;
+  DESCRIBE_STORIES.forEach(function (rule) {
+    var score = 0;
+    (rule.people || []).forEach(function (p) { if (people.indexOf(p) !== -1) score += 2; });
+    (rule.intents || []).forEach(function (it) { if (intents.indexOf(it) !== -1) score += 2; });
+    (rule.emotions || []).forEach(function (em) { if (emotions.indexOf(em) !== -1) score += 1; });
+    if (rule.theme && theme === rule.theme) score += 2;
+    if (score > bestScore) { bestScore = score; best = rule.id; }
+  });
+  var story = bestScore >= 3 ? best : null;
+  if (!story) {
+    /* A strong feeling alone still picks a story. */
+    var fallback = { grief: 'grief', emptiness: 'grief', anger: 'betrayal', survive: 'perseverance', love: 'love', missing: 'love', hope: 'perseverance', family: 'family' };
+    for (var ei = 0; ei < emotions.length; ei++) {
+      if (fallback[emotions[ei]]) { story = fallback[emotions[ei]]; break; }
+    }
+    if (!story && theme === 'family') story = 'family';
+  }
+  var tags = [];
+  if (story && STORY_PACKS[story]) tags = tags.concat(STORY_PACKS[story].tags);
+  emotions.forEach(function (em) { if (EMOTION_TAGS[em]) tags = tags.concat(EMOTION_TAGS[em]); });
+  return {
+    theme: theme, subject: subject, subjectId: subjectId, people: people,
+    emotions: emotions, intents: intents, story: story, tags: tags,
+    message: intents.length ? intents[0] : null
+  };
+}
+/* Story packs: complete-sentence lines written for one story, one slot
+ * per section of the arc. {S} = the subject ("my daughter"),
+ * {T} = the theme word, {E} = the first emotion named. Every line is
+ * written to pass the grammar gate and to stay under 15 syllables. */
+var STORY_PACKS = {
+  reunion: {
+    label: 'Reunion — rebuilding a relationship',
+    tags: ['romantic', 'sad', 'bright'],
+    situation: [
+      'I miss {S} more than words can say',
+      'It has been too long since we talked the way we did',
+      'The years went by and I let the silence grow',
+      'I still keep every photograph within my reach'
+    ],
+    develop: [
+      'I want to talk again and hear about your life',
+      'I want to make it right and take back all the lost time',
+      'I carry the regret for every year I missed',
+      'I know I cannot change the past, but I can change today'
+    ],
+    stakes: [
+      'I fear the years will steal my chance to say I love you',
+      'I know some doors open once, and I am at the door',
+      'The longer I wait, the further the distance grows'
+    ],
+    hooks: [
+      'Come back to me, {S}, let us start again',
+      'I love you, {S}, and I am not giving up',
+      'We lost the time, but love is still here',
+      'Talk to me, {S}, I am listening now'
+    ],
+    turn: [
+      'I still believe we can talk again',
+      'I am ready to listen before I speak',
+      'Hope is the first step back to you',
+      'I will not let another year slip away'
+    ],
+    resolve: [
+      'I love you, and I am here when you are ready',
+      'The door is open and my heart is too',
+      'This is my promise: I am not going anywhere'
+    ]
+  },
+  grief: {
+    label: 'Grief — losing someone and learning to survive',
+    tags: ['dark', 'sad'],
+    situation: [
+      'I lost someone I loved and the world went quiet',
+      'The emptiness has followed me everywhere I go',
+      'Every room I walk in still feels like you are gone',
+      'I wake up reaching for a voice that is not there'
+    ],
+    develop: [
+      'I know grief does not ask, it just moves in and stays',
+      'I carry the weight of every day without you',
+      'The nights are the hardest, the silence cuts so deep',
+      'I keep your memory like a light inside the dark'
+    ],
+    stakes: [
+      'I feel the emptiness grow bigger than my will to stand',
+      'I am learning to breathe in a world that took you away',
+      'I will not stop now, the dark will not win'
+    ],
+    hooks: [
+      'I miss you more than the dark can hold',
+      'The emptiness is loud, but I am still here',
+      'I know grief is the price of loving you so much',
+      'I will carry you with me and learn to survive'
+    ],
+    turn: [
+      'I am still breathing, and that is where it starts',
+      'I promise to survive, and I make it for you',
+      'The dark can follow me, but it cannot have me',
+      'I take it one day at a time, learning to stand'
+    ],
+    resolve: [
+      'I will love you always, and I will keep going',
+      'The emptiness stays, but so do I',
+      'I know goodbye is not the end of loving you'
+    ]
+  },
+  betrayal: {
+    label: 'Betrayal — trust broken, standing back up',
+    tags: ['heavy', 'dark'],
+    situation: [
+      'You smiled at me while you sharpened the knife',
+      'I trusted you with everything I had',
+      'The lie was hiding in the words you said',
+      'I gave you my loyalty and you spent it all'
+    ],
+    develop: [
+      'I will not carry your guilt another day',
+      'The truth came out and it burned like fire',
+      'You broke the trust and now you own the fall',
+      'I see the game now and I am done playing'
+    ],
+    stakes: [
+      'I hold the forgiveness, and I am keeping it',
+      'You took the best of me and left the rest in ruins',
+      'I know one more lie and there is nothing left to save'
+    ],
+    hooks: [
+      'I survived the {T} and I am still standing',
+      'The {T} cut deep but it did not kill me',
+      'You broke the trust, I built a wall of steel',
+      'I will never again kneel for a liar'
+    ],
+    turn: [
+      'I am done looking back at what you broke',
+      'The fire you lit is mine to carry now',
+      'I take my name back and I walk away clean',
+      'What you meant to break only made me strong'
+    ],
+    resolve: [
+      'I forgive the past, but I will not forget',
+      'The story ends with me still on my feet',
+      'I am the one who walked out of the fire'
+    ]
+  },
+  perseverance: {
+    label: 'Perseverance — refusing to give up',
+    tags: ['heavy', 'bright'],
+    situation: [
+      'They told me I would never make it out',
+      'Every door I knocked on slammed in my face',
+      'I started with nothing but a stubborn heart',
+      'The world bet against me and I took the bet'
+    ],
+    develop: [
+      'I get up one more time than I fall down',
+      'My knees are shaking but my feet keep moving',
+      'I turned the pain into a reason to fight',
+      'Nobody hands me nothing, so I take it all'
+    ],
+    stakes: [
+      'I will not quit now, the climb was not for nothing',
+      'The mountain does not care, so I climb it anyway',
+      'I need one more step, that is all I have to take'
+    ],
+    hooks: [
+      'I refuse to give up, I refuse to quit',
+      'The {T} is mine and I earned every scar',
+      'Stand up or stand aside, I am coming through',
+      'I refuse to fall, I refuse to break'
+    ],
+    turn: [
+      'I am still standing and that is the point',
+      'The comeback starts the moment I decide',
+      'I do not need permission to be great',
+      'Watch me turn the struggle into a song'
+    ],
+    resolve: [
+      'I made it through and I am still here',
+      'This is the proof that I never quit',
+      'The fight made me, and I am not done'
+    ]
+  },
+  love: {
+    label: 'Love — missing someone you love',
+    tags: ['romantic', 'bright'],
+    situation: [
+      'I think about you every minute of the day',
+      'I say your name first every time I wake',
+      'The distance between us is a wall I cannot climb',
+      'I keep your picture where I can see it'
+    ],
+    develop: [
+      'I miss the way you laughed at all my jokes',
+      'Every song on the radio sounds like you',
+      'I count the days till I can hold you again',
+      'You are the reason the hard days feel light'
+    ],
+    stakes: [
+      'I will not lose you, love, you are the best of me',
+      'Love like ours does not come around twice',
+      'I would cross the whole world just to see you'
+    ],
+    hooks: [
+      'I love you more than words can say',
+      'You are my {T} and my home',
+      'Hold me close and never let me go',
+      'Every heartbeat says your name'
+    ],
+    turn: [
+      'I am coming home to you, no matter how far',
+      'The wait is over, I am on my way',
+      'I know nothing on this earth can keep us apart',
+      'I choose you, today and every day'
+    ],
+    resolve: [
+      'You are my always, you are my home',
+      'This love is the one thing time cannot take',
+      'I know forever starts the moment I see you'
+    ]
+  },
+  family: {
+    label: 'Family — carrying the ones you love',
+    tags: ['romantic', 'sad', 'bright'],
+    situation: [
+      'My family is the reason I keep on going',
+      'I carry their names like a shield on my back',
+      'We did not have much, but we had each other',
+      'My mama taught me never to bow my head'
+    ],
+    develop: [
+      'I make sacrifices for the ones I love',
+      'I work the long nights so they can dream big',
+      'The blood in my veins is the strength of my kin',
+      'I will build a better life with my own two hands'
+    ],
+    stakes: [
+      'I cannot fall, the whole family feels the ground shake',
+      'The rent is due and the dream is on the line',
+      'I cannot stop now, too many hearts count on me'
+    ],
+    hooks: [
+      'This is for my {T}, this is for us all',
+      'My family is the fire that never burns out',
+      'We rise together, we never fall apart',
+      'I will give it everything for the {T}'
+    ],
+    turn: [
+      'I am the one who breaks the cycle now',
+      'The future starts with the choices I make today',
+      'We are stronger than the struggle we survived',
+      'I carry them with me in every step I take'
+    ],
+    resolve: [
+      'I put family first, always and forever',
+      'We made it together, and we are still here',
+      'This is my promise to the ones I love'
+    ]
+  }
+};
+function renderStoryLine(template, profile, theme) {
+  return (template || '')
+    .split('{S}').join((profile && profile.subject) || 'you')
+    .split('{T}').join(theme || '')
+    .split('{E}').join((profile && profile.emotions && profile.emotions[0]) || '');
+}
+/* One story-pack line for a section role, or null when no story is active.
+ * 'situation' | 'develop' | 'stakes' | 'turn' | 'resolve'. Never repeats a
+ * line already in the song. */
+function storyLineFor(role, rng, ctx, usedLines) {
+  var profile = ctx.describe;
+  var pack = profile && profile.story ? STORY_PACKS[profile.story] : null;
+  if (!pack || !pack[role] || !pack[role].length) return null;
+  var avail = pack[role].filter(function (t) {
+    var rendered = renderStoryLine(t, profile, ctx.theme);
+    return !usedLines || usedLines.indexOf(rendered) === -1;
+  });
+  if (!avail.length) avail = pack[role];
+  return renderStoryLine(pick(rng, avail), profile, ctx.theme);
+}
+
+/* =====================================================================
  * RANDOM IDEAS — themes, opening lines, story concepts, chorus ideas.
  * ===================================================================== */
 var IDEA_THEMES = [
@@ -468,6 +857,50 @@ function buildVoiceProfile(sampleText) {
     }
   }
   var topPhrases = Object.keys(bigrams).sort(function (a, b) { return bigrams[b] - bigrams[a]; }).slice(0, 8);
+  /* Three-word phrases Robert actually uses ("midnight rain on"). */
+  var trigrams = {};
+  for (var ti = 0; ti + 2 < allWords.length; ti++) {
+    var tg = allWords[ti] + ' ' + allWords[ti + 1] + ' ' + allWords[ti + 2];
+    var hasContent = [allWords[ti], allWords[ti + 1], allWords[ti + 2]].some(function (w) { return VOICE_STOPWORDS.indexOf(w) === -1; });
+    if (hasContent) trigrams[tg] = (trigrams[tg] || 0) + 1;
+  }
+  var topTrigrams = Object.keys(trigrams).sort(function (a, b) { return trigrams[b] - trigrams[a]; }).slice(0, 6);
+  /* Line openers: how Robert starts his lines. Only pronoun + helper
+     patterns are kept ("I keep", "We never", "I still") — those combine
+     cleanly with a clause opener ("I keep chasing the dream"), while a
+     bare noun opener ("Midnight rain") would make a fragment. */
+  var openerCounts = {};
+  var OPENER_SECONDS = ['keep', 'never', 'always', 'still', 'want', 'gonna', 'will', "won't", "can't", 'can', 'just', 'really'];
+  lines.forEach(function (l) {
+    var w = wordsOf(l);
+    if (w.length < 2) return;
+    var first = w[0].toLowerCase(), second = w[1].toLowerCase();
+    if (['i', 'we', 'you', 'they'].indexOf(first) !== -1 && OPENER_SECONDS.indexOf(second) !== -1) {
+      var op = capFirst(first) + ' ' + second;
+      openerCounts[op] = (openerCounts[op] || 0) + 1;
+    }
+  });
+  var topOpeners = Object.keys(openerCounts).sort(function (a, b) { return openerCounts[b] - openerCounts[a]; }).slice(0, 6);
+  /* Line closers: the last two words of a line, when they carry meaning. */
+  var closerCounts = {};
+  lines.forEach(function (l) {
+    var w = wordsOf(l);
+    if (w.length < 2) return;
+    var last2 = w[w.length - 2].toLowerCase() + ' ' + w[w.length - 1].toLowerCase();
+    if (VOICE_STOPWORDS.indexOf(w[w.length - 1]) === -1) closerCounts[last2] = (closerCounts[last2] || 0) + 1;
+  });
+  var topClosers = Object.keys(closerCounts).sort(function (a, b) { return closerCounts[b] - closerCounts[a]; }).slice(0, 6);
+  /* Sentence shapes: questions, short lines, long lines, multi-clause
+     lines, first-person lines — the rhythm of how he writes. */
+  var shapes = { questions: 0, short: 0, long: 0, multiClause: 0, firstPerson: 0 };
+  lines.forEach(function (l) {
+    var w = wordsOf(l);
+    if (/\?\s*$/.test(l.trim())) shapes.questions++;
+    if (w.length <= 6) shapes.short++;
+    if (w.length > 10) shapes.long++;
+    if (l.indexOf(',') !== -1) shapes.multiClause++;
+    if (/^\s*(i|we|my|our)\b/i.test(l)) shapes.firstPerson++;
+  });
   /* Rhyme endings: last word of each line. */
   var endings = {};
   lines.forEach(function (l) {
@@ -482,6 +915,10 @@ function buildVoiceProfile(sampleText) {
     totalLines: lines.length,
     topWords: topWords,
     topPhrases: topPhrases,
+    topTrigrams: topTrigrams,
+    topOpeners: topOpeners,
+    topClosers: topClosers,
+    shapes: shapes,
     rhymeEndings: topEndings,
     avgSyllables: lines.length ? Math.round((syll / lines.length) * 10) / 10 : 0,
     firstPerson: (text.match(/\b(i|my|me|we|our)\b/gi) || []).length,
@@ -490,10 +927,21 @@ function buildVoiceProfile(sampleText) {
 }
 function voiceSummary(profile) {
   if (!profile || !profile.sampleLines) return 'No voice profile yet. Paste some of your own lyrics and build one.';
-  return profile.sampleLines + ' lines analyzed · favorite words: ' +
+  var out = profile.sampleLines + ' lines analyzed · favorite words: ' +
     (profile.topWords.slice(0, 5).join(', ') || '—') +
     ' · rhyme endings: ' + (profile.rhymeEndings.slice(0, 4).join(', ') || '—') +
     ' · avg ' + profile.avgSyllables + ' syllables per line';
+  if (profile.topOpeners && profile.topOpeners.length) {
+    out += ' · opens with: ' + profile.topOpeners.slice(0, 3).join(', ');
+  }
+  if (profile.shapes) {
+    var s = profile.shapes, n = profile.sampleLines || 1;
+    if (s.questions / n >= 0.25) out += ' · asks questions';
+    else if (s.short / n >= 0.6) out += ' · short lines';
+    else if (s.long / n >= 0.4) out += ' · long lines';
+    if (s.multiClause / n >= 0.4) out += ' · multi-clause lines';
+  }
+  return out;
 }
 
 /* =====================================================================
@@ -519,6 +967,7 @@ function voiceSummary(profile) {
  * (slogans like "Thunder and fire, forever loud") are checked by hand
  * and are exempt from this gate in checkSong.
  * ===================================================================== */
+var QUESTION_STARTERS = ['do you', 'can you', 'will you', 'would you', 'have you', 'are you', 'did you', 'do i', 'can i'];
 var SUBJECT_WORDS = ['i', 'we', 'you', 'they', 'he', 'she', 'it', "i'm", "we're", "you're", "they're", "he's", "she's", "it's", 'my', 'these', 'the', 'what', 'nobody', 'this', 'that', "there's", 'there', 'every', 'no'];
 var IMPERATIVE_VERBS = ['give', 'turn', 'sing', 'burn', 'run', 'look', 'hold', 'take', 'keep', 'let', 'hear', 'rise', 'fall', 'stand', 'fight', 'wait', 'watch', 'remember', 'cry', 'follow', 'chase', 'break', 'raise', 'shout', 'call', 'reach', 'face', 'own', 'rule', 'want', 'need', 'feel', 'see', 'know', 'find', 'leave', 'go', 'come', 'stay', 'live', 'die', 'love', 'hate', 'try', 'use', 'work', 'play', 'talk', 'walk', 'jump', 'climb', 'ride', 'drive', 'dance', 'drink', 'sleep', 'wake', 'dream', 'rest', 'pray', 'hope', 'wish', 'beg', 'swear', 'speak', 'tell', 'say', 'show', 'bring', 'pull', 'push', 'carry', 'drop', 'throw', 'catch', 'grab', 'hide', 'seek', 'hit', 'kick', 'strike', 'win', 'lose', 'miss', 'forget', 'forgive', 'learn', 'grow', 'change', 'return', 'arrive', 'escape', 'flee', 'hunt', 'search', 'listen', 'laugh', 'smile', 'stare', 'think', 'believe', 'trust', 'fear', 'kiss', 'touch', 'grip', 'tear', 'rip', 'smash', 'crush', 'cut', 'paint', 'write', 'march', 'sit', 'lie', 'kneel', 'bow', 'leap', 'dive', 'fly', 'soar', 'glide', 'drift', 'float', 'swim', 'sail', 'creep', 'slide', 'slip', 'trip', 'stumble', 'race', 'rush', 'hurry', 'linger'];
 var GERUNDS = ['running', 'fighting', 'burning', 'falling', 'rising', 'drowning', 'chasing', 'singing', 'crying', 'screaming', 'waiting', 'looking', 'walking', 'talking', 'dancing', 'bleeding', 'breaking', 'losing', 'winning', 'driving', 'riding', 'climbing', 'crawling', 'kneeling', 'hiding', 'seeking', 'standing', 'holding', 'carrying', 'following', 'searching', 'listening', 'laughing', 'smiling', 'staring', 'thinking', 'believing', 'trusting', 'fearing', 'kissing', 'touching', 'gripping', 'tearing', 'smashing', 'crushing', 'cutting', 'painting', 'writing', 'marching', 'sitting', 'lying', 'leaping', 'diving', 'flying', 'soaring', 'gliding', 'drifting', 'floating', 'swimming', 'sailing', 'creeping', 'sliding', 'slipping', 'tripping', 'stumbling', 'racing', 'rushing', 'hurrying', 'lingering', 'turning', 'watching', 'feeling', 'giving', 'taking', 'keeping', 'letting', 'hearing', 'remembering', 'wanting', 'needing', 'seeing', 'knowing', 'finding', 'leaving', 'going', 'coming', 'staying', 'living', 'dying', 'loving', 'hating', 'trying', 'using', 'working', 'playing', 'jumping', 'drinking', 'sleeping', 'waking', 'dreaming', 'resting', 'praying', 'hoping', 'wishing', 'begging', 'swearing', 'speaking', 'telling', 'saying', 'showing', 'bringing', 'pulling', 'pushing', 'dropping', 'throwing', 'catching', 'grabbing', 'hitting', 'kicking', 'striking', 'missing', 'forgetting', 'forgiving', 'learning', 'growing', 'changing', 'returning', 'arriving', 'escaping', 'fleeing', 'hunting'];
@@ -584,6 +1033,12 @@ function validateLine(line) {
   var body = stripMarkers(raw);
   var bwords = wordsOf(body);
   if (bwords.length < 3) return { ok: false, reason: 'fragment after markers' };
+  /* A direct question to the listener is a real sentence too
+     ("Do you hear the sound", "Can you feel the fire"). */
+  var q = body.toLowerCase();
+  for (var qi = 0; qi < QUESTION_STARTERS.length; qi++) {
+    if (q.indexOf(QUESTION_STARTERS[qi] + ' ') === 0) return { ok: true };
+  }
   var first = bwords[0].toLowerCase();
   var second = bwords.length > 1 ? bwords[1].toLowerCase() : '';
   var isSubject = SUBJECT_WORDS.indexOf(first) !== -1;
@@ -600,7 +1055,7 @@ function validateLine(line) {
     if (bare && GERUNDS.indexOf(second) !== -1) {
       return { ok: false, reason: 'subject + gerund ("' + bwords[0] + ' ' + bwords[1] + '")' };
     }
-    if (bare && second.length > 2 && /s$/.test(second) && AUXILIARIES.indexOf(second) === -1 && second !== 'is' && second !== 'has' && second !== 'does') {
+    if (bare && second.length > 2 && /s$/.test(second) && !/ss$/.test(second) && AUXILIARIES.indexOf(second) === -1 && second !== 'is' && second !== 'has' && second !== 'does') {
       return { ok: false, reason: 'subject + wrong verb form ("' + bwords[0] + ' ' + bwords[1] + '")' };
     }
   }
@@ -614,6 +1069,9 @@ function buildCouplet(rng, ctx, usedLines) {
     if (st) tags = tags.concat(st.tags);
   });
   if (ctx.darkBias) tags.push('dark');
+  /* Description emotions pull the rhyme families toward the feeling —
+     grief leans dark and sad, hope leans bright and romantic. */
+  if (ctx.emotionTags) tags = tags.concat(ctx.emotionTags);
   var pool = tags.length ? familiesForTags(tags) : RHYME_FAMILIES;
   /* Voice bias: prefer families holding one of Robert's rhyme endings —
      but only when his endings cover enough ground. A 2-family pool
@@ -663,6 +1121,14 @@ function buildCouplet(rng, ctx, usedLines) {
      never "But We live..."). "I" and its contractions stay capital. */
   function withMarker(lead, word) {
     var pfx = pick(rng, prefixes);
+    /* Write it in his voice: sometimes open the line the way Robert
+       opens his own lines ("I keep chasing the dream"). The grammar
+       gate below throws out any opener that does not fit, so a bad
+       combination never reaches the song. */
+    if (ctx.voice && ctx.voice.topOpeners && ctx.voice.topOpeners.length && rng() < 0.3) {
+      pfx = pick(rng, ctx.voice.topOpeners);
+    }
+    if (pfx && pfx.charAt(pfx.length - 1) !== ' ') pfx += ' ';
     var ld = pfx ? lowerFirstUnlessI(lead) : lead;
     return capFirst((pfx + ld + ' ' + word).trim());
   }
@@ -708,7 +1174,84 @@ function buildCouplet(rng, ctx, usedLines) {
   }
   return { lines: lines, family: fam.id };
 }
+/* =====================================================================
+ * RAP FLOW — rap and hip-hop get their own couplet shape: internal
+ * rhymes (the rhyme word lands mid-line AND at the end) and punchline
+ * closers. A rap couplet uses two words from one rhyme family:
+ *   "I break the chains, I feel the pain"
+ *   "I spit the pain, I claim the chains"
+ * The mid-line word rhymes with the end word, and the two lines swap
+ * them — that is the internal-rhyme bounce. Punchlines close a verse
+ * with one hard bar, the way a real verse lands.
+ * ===================================================================== */
+var RAP_VERBS = ['spit', 'flip', 'drop', 'bring', 'chase', 'claim', 'own', 'ride', 'speak', 'live', 'break', 'feel', 'carry', 'write'];
+var PUNCHLINES = {
+  rap: [
+    'Every bar is a fact and the fact is I made it',
+    'I wrote my name in the concrete of this town',
+    'They slept on me, now they cannot sleep at all',
+    'The crown was heavy, but I wear it anyway',
+    'I turned the struggle into a song they all sing'
+  ],
+  'hip-hop': [
+    'The city raised me and the city made me shine',
+    'I wear the gold and I own the night',
+    'My dreams are bigger than the skyline at midnight',
+    'I turned the neon lights into a crown of gold',
+    'I came from the shadows and I brought the light'
+  ]
+};
+function buildRapCouplet(rng, ctx, usedLines) {
+  var pool = familiesForTags(['street', 'heavy', 'dark', 'sad']);
+  var lines = null, fam = null;
+  for (var attempt = 0; attempt < 8 && !lines; attempt++) {
+    fam = pick(rng, pool);
+    var words = pickDistinct(rng, fam.words, 2);
+    var v = [pick(rng, RAP_VERBS), pick(rng, RAP_VERBS), pick(rng, RAP_VERBS), pick(rng, RAP_VERBS)];
+    var cands = [
+      ['I ' + v[0] + ' the ' + words[0] + ', I ' + v[1] + ' the ' + words[1],
+       'I ' + v[2] + ' the ' + words[1] + ', I ' + v[3] + ' the ' + words[0]],
+      ['They talk about the ' + words[0] + ', I live in the ' + words[1],
+       'They count the ' + words[1] + ', I claim the ' + words[0]],
+      ['I came from the ' + words[0] + ', I rise to the ' + words[1],
+       'I rose from the ' + words[1] + ', I run from the ' + words[0]]
+    ];
+    var cand = pick(rng, cands);
+    var l1 = capFirst(cand[0]), l2 = capFirst(cand[1]);
+    if (!validateLine(l1).ok || !validateLine(l2).ok) continue;
+    if (usedLines && (usedLines.indexOf(l1) !== -1 || usedLines.indexOf(l2) !== -1)) continue;
+    if (Math.abs(countSyllables(l1) - countSyllables(l2)) > 4) continue;
+    lines = [l1, l2];
+  }
+  if (!lines) return buildCouplet(rng, ctx, usedLines);
+  if (ctx.usedWords) {
+    ctx.usedWords.push(lastWord(lines[0]));
+    ctx.usedWords.push(lastWord(lines[1]));
+  }
+  if (usedLines) {
+    if (usedLines.indexOf(lines[0]) === -1) usedLines.push(lines[0]);
+    if (usedLines.indexOf(lines[1]) === -1) usedLines.push(lines[1]);
+  }
+  return { lines: lines, family: fam.id, rap: true };
+}
 function buildHook(rng, ctx) {
+  /* A story song's chorus says the message in the story's own words —
+     try the story-pack hooks first. A hook is used when it mentions the
+     subject at most once and the theme at most once, so it can never
+     read broken ("Nothing left but the fire and the fire"). */
+  var profile = ctx.describe;
+  var pack = profile && profile.story ? STORY_PACKS[profile.story] : null;
+  if (pack && pack.hooks && pack.hooks.length) {
+    var storyHooks = shuffleCopy(rng, pack.hooks);
+    var subject = (profile.subject || '').toLowerCase();
+    var theme = (ctx.theme || '').toLowerCase();
+    for (var hi = 0; hi < storyHooks.length; hi++) {
+      var rendered = renderStoryLine(storyHooks[hi], profile, ctx.theme);
+      var subCount = subject ? rendered.toLowerCase().split(subject).length - 1 : 0;
+      var themeCount = theme ? rendered.toLowerCase().split(theme).length - 1 : 0;
+      if (subCount <= 1 && themeCount <= 1) return rendered;
+    }
+  }
   var templates = [];
   var g = genreById(ctx.genre);
   if (g && g.hookTemplates) templates = templates.concat(g.hookTemplates);
@@ -739,14 +1282,25 @@ function buildStatement(rng, ctx, usedLines) {
     return !usedLines.some(function (u) { return u.toLowerCase().indexOf(low) !== -1; });
   });
   if (!pool.length) pool = g.statements;
+  /* Rap and hip-hop verses sometimes close on a punchline — one hard
+     bar instead of a generic statement. */
+  if (!ctx.describe && (ctx.genre === 'rap' || ctx.genre === 'hip-hop') && PUNCHLINES[ctx.genre] && rng() < 0.5) {
+    var punches = PUNCHLINES[ctx.genre].filter(function (p) {
+      return !usedLines || usedLines.indexOf(p) === -1;
+    });
+    if (punches.length) return pick(rng, punches);
+  }
   var line = pick(rng, pool);
   /* Voice flavor: sometimes open with one of Robert's own phrases —
      but only when the flavored line still reads as a real sentence.
      A bare noun phrase in front ("Midnight rain, ...") is a fragment,
      so the gate keeps the plain line instead. */
-  if (ctx.voice && ctx.voice.topPhrases && ctx.voice.topPhrases.length && rng() < 0.35) {
-    var flavored = capFirst(pick(rng, ctx.voice.topPhrases)) + ', ' + lowerFirstUnlessI(line);
-    if (validateLine(flavored).ok && countSyllables(flavored) <= 14) line = flavored;
+  if (ctx.voice && (ctx.voice.topPhrases || ctx.voice.topTrigrams) && rng() < 0.35) {
+    var phrases = (ctx.voice.topPhrases || []).concat(ctx.voice.topTrigrams || []);
+    if (phrases.length) {
+      var flavored = capFirst(pick(rng, phrases)) + ', ' + lowerFirstUnlessI(line);
+      if (validateLine(flavored).ok && countSyllables(flavored) <= 14) line = flavored;
+    }
   }
   return line;
 }
@@ -763,41 +1317,56 @@ function lowerFirstUnlessI(line) {
   if (/^(I\b|I'm|I've|I'll|I'd)/.test(s)) return s;
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
+/* Rap and hip-hop verses sometimes ride a rap couplet (internal rhymes)
+   instead of a plain couplet — the flow changes with the genre. */
+function verseCouplet(rng, ctx, usedLines) {
+  if ((ctx.genre === 'rap' || ctx.genre === 'hip-hop') && rng() < 0.5) return buildRapCouplet(rng, ctx, usedLines);
+  return buildCouplet(rng, ctx, usedLines);
+}
 function generateSection(role, rng, ctx, usedLines) {
   var lines = [], fams = [], label = role, seedIndices = [];
   if (role === 'verse1') {
     label = 'Verse 1 — introduces the situation';
-    var c1 = buildCouplet(rng, ctx, usedLines);
+    var c1 = verseCouplet(rng, ctx, usedLines);
     var c2 = buildCouplet(rng, ctx, usedLines);
     lines = c1.lines.concat(c2.lines);
     fams = [c1.family, c2.family];
     /* Seed lines open verse 1 in My Lyrics mode — kept word for word. */
     if (ctx.seedLines && ctx.seedLines.length) {
       var seeds = ctx.seedLines.slice(0, 2);
-      lines = seeds.concat(lines).slice(0, 4);
+      /* Keep couplets intact: with one seed line the verse holds five
+         lines (seed + two whole couplets), never a sliced-off half. */
+      lines = seeds.concat(lines).slice(0, seeds.length % 2 === 0 ? 4 : 5);
       seedIndices = seeds.map(function (_, i) { return i; });
-    } else if (!ctx.easy && rng() < 0.5) {
-      /* Statement line closes the verse as an extra line — never breaks a couplet. */
-      lines = lines.concat([buildStatement(rng, ctx, usedLines)]);
+    } else {
+      /* The story's situation line closes the verse — or, with no story,
+         a statement line half the time. Never breaks a couplet. */
+      var v1line = storyLineFor('situation', rng, ctx, usedLines);
+      if (!v1line && !ctx.easy && rng() < 0.5) v1line = buildStatement(rng, ctx, usedLines);
+      if (v1line) lines = lines.concat([v1line]);
     }
   } else if (role === 'verse2') {
     label = 'Verse 2 — develops the story';
-    var d1 = buildCouplet(rng, ctx, usedLines);
+    var d1 = verseCouplet(rng, ctx, usedLines);
     var d2 = buildCouplet(rng, ctx, usedLines);
     lines = d1.lines.concat(d2.lines);
     fams = [d1.family, d2.family];
     if (ctx.seedLines && ctx.seedLines.length > 2) {
       lines[2] = ctx.seedLines[2];
       seedIndices = [2];
-    } else if (!ctx.easy && rng() < 0.5) {
-      lines = lines.concat([buildStatement(rng, ctx, usedLines)]);
+    } else {
+      var v2line = storyLineFor('develop', rng, ctx, usedLines);
+      if (!v2line && !ctx.easy && rng() < 0.5) v2line = buildStatement(rng, ctx, usedLines);
+      if (v2line) lines = lines.concat([v2line]);
     }
   } else if (role === 'verse3') {
     label = 'Verse 3 — raises the stakes';
-    var e1 = buildCouplet(rng, ctx, usedLines);
+    var e1 = verseCouplet(rng, ctx, usedLines);
     var e2 = buildCouplet(rng, ctx, usedLines);
     lines = e1.lines.concat(e2.lines);
     fams = [e1.family, e2.family];
+    var v3line = storyLineFor('stakes', rng, ctx, usedLines);
+    if (v3line) lines = lines.concat([v3line]);
   } else if (role === 'chorus') {
     label = 'Chorus — the central message';
     var hook = buildHook(rng, ctx);
@@ -819,7 +1388,14 @@ function generateSection(role, rng, ctx, usedLines) {
       if (!f1) f1 = cand;
     }
     var f2 = buildCouplet(rng, bCtx, usedLines);
-    lines = ['But now — ' + lowerFirstUnlessI(stripMarkers(f1.lines[0]))];
+    /* The story's turning-point line leads the bridge when one is active
+       ("But now — I still believe we can talk again"). It is a story
+       line, not part of a couplet, so the rhyme and syllable checks
+       skip it (see checkSong) — only the grammar gate still applies,
+       and every story line is written to pass it. */
+    var turnLine = storyLineFor('turn', rng, ctx, usedLines);
+    if (turnLine) lines = ['But now — ' + lowerFirstUnlessI(turnLine)];
+    else lines = ['But now — ' + lowerFirstUnlessI(stripMarkers(f1.lines[0]))];
     lines.push(f1.lines[1]);
     lines = lines.concat(f2.lines);
     fams = [f1.family, f2.family];
@@ -837,6 +1413,8 @@ function generateSection(role, rng, ctx, usedLines) {
       'Turn it up one last time.',
       'This is how it ends — and how it begins.'
     ]);
+    var resolveLine = storyLineFor('resolve', rng, ctx, usedLines);
+    if (resolveLine) lines.push(resolveLine);
     lines.push(closer);
   }
   lines.forEach(function (l) { if (usedLines.indexOf(l) === -1) usedLines.push(l); });
@@ -884,9 +1462,11 @@ function generateSong(opts) {
   /* Style availability: keep only styles allowed for this genre. */
   styles = styles.filter(function (s) { return styleById(s).genres.indexOf(genre.id) !== -1; });
   if (!styles.length) styles = ['heavy'];
-  var theme;
-  if (opts.method === 'describe' || opts.description) theme = extractTheme(opts.description || '', genre.id);
-  else theme = genre.defaultTheme;
+  /* Describe mode reads the whole description — subject, people,
+     emotions, message, story — not just one keyword. */
+  var profile = null;
+  if (opts.method === 'describe' || opts.description) profile = describeProfile(opts.description || '', genre.id);
+  var theme = profile ? profile.theme : genre.defaultTheme;
   /* Voice can override the theme if one of Robert's words matches a theme. */
   if (opts.voice && opts.voice.topWords) {
     for (var vi = 0; vi < opts.voice.topWords.length; vi++) {
@@ -901,6 +1481,8 @@ function generateSong(opts) {
     voice: opts.voice || null,
     seedLines: (opts.seedLines || []).map(function (l) { return l.trim(); }).filter(Boolean),
     extraPrefixes: [],
+    describe: profile,
+    emotionTags: profile ? profile.tags : [],
     usedWords: [] /* rhyme words already used in this song — couplets pick fresh ones */
   };
   (styles || []).forEach(function (s) {
@@ -955,6 +1537,8 @@ function generateSong(opts) {
     styleNames: styles.map(function (s) { return styleById(s).name; }),
     method: opts.method || 'lyrics',
     theme: theme,
+    describeProfile: profile,
+    story: profile ? profile.story : null,
     length: length,
     bridge: !!opts.bridge,
     seedLines: ctx.seedLines,
@@ -969,7 +1553,8 @@ function generateSong(opts) {
   return song;
 }
 function songToText(song) {
-  var out = [song.title, '', 'Genre: ' + genreById(song.genre).name + ' · ' + song.styleNames.join(' + ') + ' · ' + (song.length === 'short' ? 'Short' : 'Full') + (song.bridge ? ' · Bridge' : ''), ''];
+  var storyLabel = song.story && STORY_PACKS[song.story] ? ' · ' + STORY_PACKS[song.story].label : '';
+  var out = [song.title, '', 'Genre: ' + genreById(song.genre).name + ' · ' + song.styleNames.join(' + ') + ' · ' + (song.length === 'short' ? 'Short' : 'Full') + (song.bridge ? ' · Bridge' : '') + storyLabel, ''];
   song.sections.forEach(function (sec) {
     out.push('[' + sec.role.replace('verse', 'Verse ').replace('chorus', 'Chorus').replace('bridge', 'Bridge').replace('outro', 'Outro') + ']');
     sec.lines.forEach(function (l) { out.push(l); });
@@ -1006,6 +1591,8 @@ function regenerateSection(song, sectionId, instruction, opts) {
   var ctx = {
     genre: song.genre, styles: song.styles.slice(), theme: song.theme,
     voice: opts.voice || null, seedLines: [], extraPrefixes: [],
+    describe: song.describeProfile || null,
+    emotionTags: (song.describeProfile && song.describeProfile.tags) || [],
     usedWords: [] /* rhyme words in the untouched sections — the new section picks fresh ones */
   };
   song.sections.forEach(function (s, si) {
@@ -1082,12 +1669,28 @@ function checkSong(song) {
   var warnings = [];
   var seen = {};
   var allLines = [];
-  /* Statement lines are full pre-written lines — never rhyme-checked. */
+  /* Statement lines are full pre-written lines — never rhyme-checked.
+     That includes story-pack lines (rendered with this song's subject
+     and theme), rap punchlines, and the bridge's "But now — " prefix
+     on a story turn line. */
   var statementBank = {};
   GENRES.forEach(function (g) { g.statements.forEach(function (s) { statementBank[s.toLowerCase()] = true; }); });
+  Object.keys(PUNCHLINES).forEach(function (k) { PUNCHLINES[k].forEach(function (s) { statementBank[s.toLowerCase()] = true; }); });
+  if (song.describeProfile && song.describeProfile.story) {
+    var spack = STORY_PACKS[song.describeProfile.story];
+    if (spack) {
+      ['situation', 'develop', 'stakes', 'hooks', 'turn', 'resolve'].forEach(function (k) {
+        (spack[k] || []).forEach(function (t) {
+          statementBank[renderStoryLine(t, song.describeProfile, song.theme).toLowerCase()] = true;
+        });
+      });
+    }
+  }
   function isExempt(sec, idx) {
     if (sec.seedIndices && sec.seedIndices.indexOf(idx) !== -1) return true; /* Robert's own words */
-    if (statementBank[(sec.lines[idx] || '').trim().toLowerCase()]) return true;
+    var raw = (sec.lines[idx] || '').trim().toLowerCase();
+    if (statementBank[raw]) return true;
+    if (statementBank[raw.replace(/^but now —\s*/, '')]) return true;
     return false;
   }
   song.sections.forEach(function (sec) {
@@ -1102,7 +1705,14 @@ function checkSong(song) {
     });
   });
   song.sections.forEach(function (sec) {
-    for (var i = 0; i + 1 < sec.lines.length; i += 2) {
+    /* Couplets start at even indices — unless an odd number of seed
+       lines opens the verse, which shifts them by one. Count the
+       leading seed lines and pair from there, or a one-seed verse
+       would flag two good lines from different families as a bad rhyme. */
+    var leading = 0;
+    while (sec.seedIndices && sec.seedIndices.indexOf(leading) !== -1) leading++;
+    var pairStart = leading % 2;
+    for (var i = pairStart; i + 1 < sec.lines.length; i += 2) {
       if (sec.role === 'chorus') continue; /* chorus hook repeats by design */
       if (isExempt(sec, i) || isExempt(sec, i + 1)) continue;
       var a = sec.lines[i], b = sec.lines[i + 1];
@@ -2045,6 +2655,11 @@ if (typeof document !== 'undefined') (function () {
       renderSongbook(); renderVoice();
       toast('All Rock Hard data cleared from this phone.');
     });
+  /* Offline: cache the app shell so the app opens with no connection.
+     Registration failure is not fatal — the app still works online. */
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    try { navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
+  }
     setMethod('lyrics');
     renderGenres();
     renderStyles();
@@ -2064,6 +2679,10 @@ if (typeof module !== 'undefined' && module.exports) {
     STYLE_PAIRS: STYLE_PAIRS, THEME_WORDS: THEME_WORDS,
     genreById: genreById, styleById: styleById, stylesForGenre: stylesForGenre,
     stylesCompatible: stylesCompatible, extractTheme: extractTheme,
+    describeProfile: describeProfile, STORY_PACKS: STORY_PACKS,
+    renderStoryLine: renderStoryLine, storyLineFor: storyLineFor,
+    DESCRIBE_EMOTIONS: DESCRIBE_EMOTIONS, PUNCHLINES: PUNCHLINES,
+    buildRapCouplet: buildRapCouplet,
     randomIdea: randomIdea, countSyllables: countSyllables, lastWord: lastWord,
     familyOfWord: familyOfWord, familyById: familyById, familiesForTags: familiesForTags,
     buildVoiceProfile: buildVoiceProfile, voiceSummary: voiceSummary,

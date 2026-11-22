@@ -53,6 +53,10 @@ root, no build step. Icons live in `icons/`, regenerate with:
 python3 scripts/make_icons.py
 ```
 
+Offline: `sw.js` caches the app shell (cache-first) on first load, so the app
+opens with no connection. Bump `CACHE_NAME` in `sw.js` when the shell files
+change, so phones pick up the new version.
+
 ## Platform
 
 Primary target is **Android Chrome** (Robert's phone). Add to Home Screen via
